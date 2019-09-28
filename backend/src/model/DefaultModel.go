@@ -53,6 +53,12 @@ func (m *DefaultModel) Get(key string, secret string) (dto.ValueDTO, error) {
 	entity.Accesses--
 	if entity.Accesses <= 0 {
 		m.repository.Delete(key)
+	} else {
+		// Todo: This resets the TTL
+		err = m.repository.Put(key, entity)
+		if err != nil {
+			return value, err
+		}
 	}
 
 	if entity.Accesses < 0 {
