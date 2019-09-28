@@ -6,7 +6,7 @@ Store your keys encrypted for exactly one read
 
 ### Install Go
 
-- on [MacOSX](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos)
+- on [macOS](https://www.digitalocean.com/community/tutorials/how-to-install-go-and-set-up-a-local-programming-environment-on-macos)
 
 ### Install Go Packages
 
@@ -32,7 +32,10 @@ docker-compose up redis
 go run backend/src/main.go
 ```
 
-TODO: add how to start (debug) the app with VS Code.
+Debug the app with VS Code by executing the `Launch` debug script. Simply run
+the `Debug: Select and Start Debugging` command and select `Launch`. Note: You
+might need to install xcode command line tools (`xcode-select --install`) to
+be able to run the debugger on macOS.
 
 ## Endpoints
 
