@@ -1,10 +1,10 @@
 package model
 
-import "../domain"
+import "../dto"
 
 // Model to store, get and delete values
 type Model interface {
-	Store(Value domain.Value)
-	Get(key string) domain.Value
+	Store(key string, secret string, value dto.ValueDTO)
+	Get(key string, secret string) (dto.ValueDTO, error)
 	Delete(key string)
 }

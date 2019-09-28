@@ -2,12 +2,15 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/gorilla/mux"
 
-	"../domain"
+	"../dto"
 	"../model"
 )
 
@@ -24,10 +27,18 @@ func makeGetHandler(model model.Model) func(w http.ResponseWriter, r *http.Reque
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		key := vars["key"]
+		secret := r.Header.Get("X-Secret")
 
-		v := model.Get(key)
+		v, err := model.Get(key, secret)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
 
-		json, _ := json.Marshal(v)
+		json, err := json.Marshal(v)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		w.Write(json)
 	}
 }
@@ -50,15 +61,25 @@ func makeStoreHandler(model model.Model) func(w http.ResponseWriter, r *http.Req
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		fmt.Println(string(body))
 
-		var value domain.Value
+		secret := r.Header.Get("X-Secret")
+
+		var value dto.ValueDTO
 		if err = json.Unmarshal(body, &value); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
-		model.Store(value)
+		uuid, error := uuid.NewRandom()
+		if error != nil {
+			panic(error)
+		}
+		key := uuid.String()
+
+		model.Store(key, secret, value)
 
 		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(key))
 	}
 }
