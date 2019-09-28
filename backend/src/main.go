@@ -2,8 +2,10 @@ package main
 
 import (
 	"./controller"
+	"./model"
 )
 
 func main() {
-	controller.Start()
+	model := model.DefaultModel{}
+	controller.Start(model)
 }
