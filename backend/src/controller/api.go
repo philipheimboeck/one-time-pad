@@ -15,12 +15,12 @@ import (
 )
 
 // Start the server
-func Start(model model.Model) {
+func Start(port string, model model.Model) {
 	router := mux.NewRouter()
 	router.HandleFunc("/api/{key}", makeGetHandler(model)).Methods("GET")
 	router.HandleFunc("/api/{key}", makeDeleteHandler(model)).Methods("DELETE")
 	router.HandleFunc("/api/", makeStoreHandler(model)).Methods("POST")
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(":"+port, router)
 }
 
 func makeGetHandler(model model.Model) func(w http.ResponseWriter, r *http.Request) {
