@@ -20,13 +20,16 @@ func MakeDefaultModel(r persistence.Repository) DefaultModel {
 }
 
 // Store a new key-value pair, including the ttl and number of possible accesses
-func (m *DefaultModel) Store(key string, secret string, value dto.ValueDTO) {
+func (m *DefaultModel) Store(key string, secret string, value dto.ValueDTO) error {
 
 	entity := domain.Value{TTL: value.TTL, Accesses: value.Accesses}
 
-	encrypt(secret, value.Value, &entity)
+	err := encrypt(secret, value.Value, &entity)
+	if err != nil {
+		return err
+	}
 
-	m.repository.Put(key, entity)
+	return m.repository.Put(key, entity)
 }
 
 // Get by a key and decrease the possible accesses
@@ -38,7 +41,12 @@ func (m *DefaultModel) Get(key string, secret string) (dto.ValueDTO, error) {
 		return value, err
 	}
 
-	value.Value = decrypt(secret, &entity)
+	dcryptedValue, err := decrypt(secret, &entity)
+	if err != nil {
+		return value, err
+	}
+
+	value.Value = dcryptedValue
 	value.Accesses = entity.Accesses
 	value.TTL = entity.TTL
 
@@ -55,19 +63,21 @@ func (m *DefaultModel) Get(key string, secret string) (dto.ValueDTO, error) {
 }
 
 // Delete a key from the database
-func (m *DefaultModel) Delete(key string) {
-	m.repository.Delete(key)
+func (m *DefaultModel) Delete(key string) error {
+	return m.repository.Delete(key)
 }
 
-func encrypt(secret string, plaintext string, value *domain.Value) {
+func encrypt(secret string, plaintext string, value *domain.Value) error {
 
-	ciphertext, encryptedKey, hashedSecret := encryption.Encrypt(secret, plaintext)
+	ciphertext, encryptedKey, hashedSecret, error := encryption.Encrypt(secret, plaintext)
 
 	value.HashedSecret = hashedSecret
 	value.EncryptedKey = encryptedKey
 	value.Value = ciphertext
+
+	return error
 }
 
-func decrypt(secret string, value *domain.Value) string {
+func decrypt(secret string, value *domain.Value) (string, error) {
 	return encryption.Decrypt(secret, value.Value, value.HashedSecret, value.EncryptedKey)
 }

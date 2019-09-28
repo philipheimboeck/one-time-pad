@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -30,6 +31,7 @@ func makeGetHandler(model model.Model) func(w http.ResponseWriter, r *http.Reque
 
 		v, err := model.Get(key, secret)
 		if err != nil {
+			fmt.Println(err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -47,7 +49,12 @@ func makeDeleteHandler(model model.Model) func(w http.ResponseWriter, r *http.Re
 		vars := mux.Vars(r)
 		key := vars["key"]
 
-		model.Delete(key)
+		err := model.Delete(key)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -75,7 +82,12 @@ func makeStoreHandler(model model.Model) func(w http.ResponseWriter, r *http.Req
 		}
 		key := uuid.String()
 
-		model.Store(key, secret, value)
+		err = model.Store(key, secret, value)
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(key))

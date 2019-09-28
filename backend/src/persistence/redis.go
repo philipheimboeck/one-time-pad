@@ -39,28 +39,32 @@ func (r *RedisRepository) Get(key string) (domain.Value, error) {
 	}
 
 	if err = json.Unmarshal([]byte(val), &value); err != nil {
-		panic(err)
+		return value, err
 	}
 
 	return value, nil
 }
 
 // Put stores a value object
-func (r *RedisRepository) Put(key string, value domain.Value) {
+func (r *RedisRepository) Put(key string, value domain.Value) error {
 	ttl := time.Duration(value.TTL * 1000 * 1000 * 1000)
 
 	payload, err := json.Marshal(value)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = r.client.Set(key, payload, ttl).Err()
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 // Delete a value
-func (r *RedisRepository) Delete(key string) {
+func (r *RedisRepository) Delete(key string) error {
 	r.client.Del(key)
+
+	return nil
 }

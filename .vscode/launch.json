@@ -10,7 +10,9 @@
 			"request": "launch",
 			"mode": "auto",
 			"program": "${workspaceFolder}/backend/src/main.go",
-			"env": {},
+			"env": {
+                "REDIS_DSN": "localhost:6379"
+            },
 			"args": []
         }
     ]

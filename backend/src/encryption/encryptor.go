@@ -5,7 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
-	"fmt"
+	"errors"
 	"io"
 
 	"golang.org/x/crypto/bcrypt"
@@ -20,87 +20,103 @@ func GenerateSecretKey() []byte {
 }
 
 // Encrypt with AES256
-func Encrypt(secret string, plaintext string) ([]byte, []byte, []byte) {
+func Encrypt(secret string, plaintext string) ([]byte, []byte, []byte, error) {
 	secretKey := GenerateSecretKey()
-	ciphertext := encryptString(secretKey, []byte(plaintext))
+	ciphertext, error := encryptString(secretKey, []byte(plaintext))
+	if error != nil {
+		return nil, nil, nil, error
+	}
 
 	sha256Secret := sha256.Sum256([]byte(secret))
-	encryptedKey := encryptString(sha256Secret[0:], secretKey)
+	encryptedKey, error := encryptString(sha256Secret[0:], secretKey)
+	if error != nil {
+		return nil, nil, nil, error
+	}
 
 	hashedSecret, error := bcrypt.GenerateFromPassword([]byte(sha256Secret[0:]), bcrypt.MinCost)
 	if error != nil {
-		panic(error)
+		return nil, nil, nil, error
 	}
 
-	return ciphertext, encryptedKey, hashedSecret
+	return ciphertext, encryptedKey, hashedSecret, nil
 }
 
-func encryptString(key []byte, plaintext []byte) []byte {
-	cipherBlock := getCipher(key)
+func encryptString(key []byte, plaintext []byte) ([]byte, error) {
+	cipherBlock, error := getCipher(key)
+	if error != nil {
+		return nil, error
+	}
 
 	gcm, error := cipher.NewGCM(cipherBlock)
 	if error != nil {
-		panic(error)
+		return nil, error
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
 
 	if _, error := io.ReadFull(rand.Reader, nonce); error != nil {
-		panic(error)
+		return nil, error
 	}
 
-	return gcm.Seal(nonce, nonce, plaintext, nil)
+	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
 // Decrypt with AES256
-func Decrypt(secret string, encryptedText []byte, hashedSecret []byte, encryptedKey []byte) string {
+func Decrypt(secret string, encryptedText []byte, hashedSecret []byte, encryptedKey []byte) (string, error) {
 
 	sha256Secret := sha256.Sum256([]byte(secret))
 	compareSecrets(sha256Secret[0:], []byte(hashedSecret))
 
-	secretKey := decryptString(sha256Secret[0:], []byte(encryptedKey))
-	plainText := decryptString(secretKey, []byte(encryptedText))
+	secretKey, err := decryptString(sha256Secret[0:], []byte(encryptedKey))
+	if err != nil {
+		return "", err
+	}
+	plainText, err := decryptString(secretKey, []byte(encryptedText))
+	if err != nil {
+		return "", err
+	}
 
-	return string(plainText)
+	return string(plainText), nil
 }
 
-func decryptString(key []byte, ciphertext []byte) []byte {
-	cipherBlock := getCipher(key)
+func decryptString(key []byte, ciphertext []byte) ([]byte, error) {
+	cipherBlock, err := getCipher(key)
+	if err != nil {
+		return nil, err
+	}
 
 	gcm, err := cipher.NewGCM(cipherBlock)
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		return nil, err
 	}
 
 	nonceSize := gcm.NonceSize()
 	if len(ciphertext) < nonceSize {
-		fmt.Println(err)
-		panic(err)
+		return nil, errors.New("Ciphertext too short")
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
 	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		return nil, err
 	}
 
-	return plaintext
+	return plaintext, nil
 }
 
-func getCipher(key []byte) cipher.Block {
+func getCipher(key []byte) (cipher.Block, error) {
 
 	cipher, error := aes.NewCipher(key)
 	if error != nil {
-		panic(error)
+		return nil, error
 	}
-	return cipher
+	return cipher, nil
 }
 
-func compareSecrets(secret []byte, hashedSecret []byte) {
+func compareSecrets(secret []byte, hashedSecret []byte) error {
 	error := bcrypt.CompareHashAndPassword(hashedSecret, secret)
 	if error != nil {
-		panic(error)
+		return error
 	}
+	return nil
 }
