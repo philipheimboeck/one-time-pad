@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -61,7 +60,6 @@ func makeStoreHandler(model model.Model) func(w http.ResponseWriter, r *http.Req
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		fmt.Println(string(body))
 
 		secret := r.Header.Get("X-Secret")
 

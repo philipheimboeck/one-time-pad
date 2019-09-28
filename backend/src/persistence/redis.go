@@ -37,7 +37,6 @@ func (r *RedisRepository) Get(key string) (domain.Value, error) {
 	if err != nil {
 		return value, err
 	}
-	fmt.Println(key, val)
 
 	if err = json.Unmarshal([]byte(val), &value); err != nil {
 		panic(err)
