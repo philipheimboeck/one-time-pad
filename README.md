@@ -26,6 +26,13 @@ When you want to start only redis, execute:
 docker-compose up redis
 ```
 
+### Environment Variables
+
+The server requires the following environment variables to be set:
+
+- `REDIS_DSN`: The server address of Redis (e.g. `localhost:6379`)
+- `HTTP_PORT`: The port on which the server listens to (e.g. `8080`)
+
 ## How to run the app and develop
 
 ```bash
