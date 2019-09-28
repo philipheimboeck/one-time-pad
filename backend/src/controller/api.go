@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/google/uuid"
+	"github.com/didip/tollbooth/limiter"
 
+	"github.com/didip/tollbooth"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 
 	"../dto"
@@ -17,10 +19,19 @@ import (
 // Start the server
 func Start(port string, model model.Model) {
 	router := mux.NewRouter()
-	router.HandleFunc("/api/{key}", makeGetHandler(model)).Methods("GET")
-	router.HandleFunc("/api/{key}", makeDeleteHandler(model)).Methods("DELETE")
-	router.HandleFunc("/api/", makeStoreHandler(model)).Methods("POST")
+	limiter := makeRateLimiter()
+
+	router.Handle("/api/{key}", tollbooth.LimitFuncHandler(limiter, makeGetHandler(model))).Methods("GET")
+	router.Handle("/api/{key}", tollbooth.LimitFuncHandler(limiter, makeDeleteHandler(model))).Methods("DELETE")
+	router.Handle("/api/", tollbooth.LimitFuncHandler(limiter, makeStoreHandler(model))).Methods("POST")
 	http.ListenAndServe(":"+port, router)
+}
+
+func makeRateLimiter() *limiter.Limiter {
+	limiter := tollbooth.NewLimiter(1, nil)
+	limiter.SetIPLookups([]string{"X-Forwarded-For", "X-Real-IP", "RemoteAddr"})
+
+	return limiter
 }
 
 func makeGetHandler(model model.Model) func(w http.ResponseWriter, r *http.Request) {
