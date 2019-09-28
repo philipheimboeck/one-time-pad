@@ -7,4 +7,5 @@ type Repository interface {
 	Get(key string) (domain.Value, error)
 	Put(key string, value domain.Value) error
 	Delete(key string) error
+	GetTTL(key string) (int, error)
 }

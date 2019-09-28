@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -67,4 +68,15 @@ func (r *RedisRepository) Delete(key string) error {
 	r.client.Del(key)
 
 	return nil
+}
+
+// GetTTL returns the remaining TTL of a key
+func (r *RedisRepository) GetTTL(key string) (int, error) {
+	duration := r.client.PTTL(key)
+
+	if duration.Val() <= time.Duration(0) {
+		return 0, errors.New("No valid TTL")
+	}
+
+	return int(duration.Val() / 1000 / 1000 / 1000), nil
 }

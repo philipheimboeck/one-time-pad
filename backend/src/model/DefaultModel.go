@@ -46,15 +46,17 @@ func (m *DefaultModel) Get(key string, secret string) (dto.ValueDTO, error) {
 		return value, err
 	}
 
-	value.Value = dcryptedValue
-	value.Accesses = entity.Accesses
-	value.TTL = entity.TTL
-
 	entity.Accesses--
-	if entity.Accesses <= 0 {
+	ttl, err := m.repository.GetTTL(key)
+	if err != nil {
+		return value, err
+	}
+
+	entity.TTL = ttl
+
+	if entity.Accesses <= 0 || entity.TTL <= 0 {
 		m.repository.Delete(key)
 	} else {
-		// Todo: This resets the TTL
 		err = m.repository.Put(key, entity)
 		if err != nil {
 			return value, err
@@ -64,6 +66,10 @@ func (m *DefaultModel) Get(key string, secret string) (dto.ValueDTO, error) {
 	if entity.Accesses < 0 {
 		return value, errors.New("Value already expired")
 	}
+
+	value.Value = dcryptedValue
+	value.Accesses = entity.Accesses
+	value.TTL = entity.TTL
 
 	return value, nil
 }
