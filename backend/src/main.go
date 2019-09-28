@@ -1,13 +1,16 @@
 package main
 
 import (
+	"os"
+
 	"./controller"
 	"./model"
 	"./persistence"
 )
 
 func main() {
-	repository := persistence.MakeRedisRepository("localhost:6379")
+	redisAddress := os.Getenv("REDIS_DSN")
+	repository := persistence.MakeRedisRepository(redisAddress)
 	model := model.MakeDefaultModel(&repository)
 	controller.Start(&model)
 }
