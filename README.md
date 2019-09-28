@@ -11,3 +11,9 @@ Store your keys encrypted for exactly one read
 ## Links
 
 - https://bitbucket.org/rwirdemann/rest-apis-go
+
+### Start Redis
+
+```bash
+(cd docker && docker-compose up -d)
+```

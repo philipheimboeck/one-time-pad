@@ -1,0 +1,8 @@
+version: "3.5"
+
+services:
+  redis:
+    # https://hub.docker.com/_/redis/
+    image: redis:5.0.6
+    ports:
+      - 6379:6379
